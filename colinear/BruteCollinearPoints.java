@@ -5,16 +5,16 @@ public class BruteCollinearPoints {
 
     private final int INITIAL_QUAD_CAPACITY = 4;
     private final int INITIAL_LINE_SEGMENTS_CAPACITY = 50;
-    private vector<LineSegment> segmentsTab;
+    private vector_ls segmentsTab;
 
     private class Quad {
 
-        private vector<Integer> lineIndices;
+        private vector_int lineIndices;
 
-        public Quad() { lineIndices = new vector<Integer>(INITIAL_QUAD_CAPACITY); } // is default c-tor needed when we call Quad[] (tab of empty Quad objects) ?
+        public Quad() { lineIndices = new vector_int(INITIAL_QUAD_CAPACITY); } // is default c-tor needed when we call Quad[] (tab of empty Quad objects) ?
 
         public Quad(int i, int j, int k, int s) {
-            lineIndices = new vector<Integer>(INITIAL_QUAD_CAPACITY);
+            lineIndices = new vector_int(INITIAL_QUAD_CAPACITY);
             lineIndices.push_back(i);
             lineIndices.push_back(j);
             lineIndices.push_back(k);
@@ -60,32 +60,96 @@ public class BruteCollinearPoints {
         }
     }
 
-    private class vector<Item> {
-        private Item[] m_items;
+    private class vector_int {
+        private Integer[] m_items;
         private int m_elements = 0;
         private int m_capacity;
 
-        @SuppressWarnings("unchecked")
-        public vector(int capacity) {
+        public vector_int(int capacity) {
             m_capacity = capacity;
-            this.m_items = (Item[]) new Object[m_capacity];
+            this.m_items = new Integer[m_capacity];
         }
 
-        public Item at(int index) {
+        public int at(int index) {
             if (index >= m_elements)
                 throw new IllegalArgumentException("vector: index out of range");
             return m_items[index];
         }
 
-        public void push_back(Item item) {
+        public void push_back(int item) {
             if (m_elements == m_capacity)
                 resize();
             m_items[m_elements++] = item;
         }
 
-        @SuppressWarnings("unchecked")
         public void resize() {
-            Item[] newTab = (Item[]) new Object[2*m_capacity];
+            Integer[] newTab = new Integer[2*m_capacity];
+            for (int i = 0; i < m_capacity; ++i)
+                newTab[i] = m_items[i];
+            m_items = newTab;
+            m_capacity *= 2;
+        }
+
+        public int size() { return m_elements; }
+    }
+
+    private class vector_quad {
+        private Quad[] m_items;
+        private int m_elements = 0;
+        private int m_capacity;
+
+        public vector_quad(int capacity) {
+            m_capacity = capacity;
+            this.m_items = new Quad[m_capacity];
+        }
+
+        public Quad at(int index) {
+            if (index >= m_elements)
+                throw new IllegalArgumentException("vector: index out of range");
+            return m_items[index];
+        }
+
+        public void push_back(Quad item) {
+            if (m_elements == m_capacity)
+                resize();
+            m_items[m_elements++] = item;
+        }
+
+        public void resize() {
+            Quad[] newTab = new Quad[2*m_capacity];
+            for (int i = 0; i < m_capacity; ++i)
+                newTab[i] = m_items[i];
+            m_items = newTab;
+            m_capacity *= 2;
+        }
+
+        public int size() { return m_elements; }
+    }
+
+    private class vector_ls {
+        private LineSegment[] m_items;
+        private int m_elements = 0;
+        private int m_capacity;
+
+        public vector_ls(int capacity) {
+            m_capacity = capacity;
+            this.m_items = new LineSegment[m_capacity];
+        }
+
+        public LineSegment at(int index) {
+            if (index >= m_elements)
+                throw new IllegalArgumentException("vector: index out of range");
+            return m_items[index];
+        }
+
+        public void push_back(LineSegment item) {
+            if (m_elements == m_capacity)
+                resize();
+            m_items[m_elements++] = item;
+        }
+
+        public void resize() {
+            LineSegment[] newTab = new LineSegment[2*m_capacity];
             for (int i = 0; i < m_capacity; ++i)
                 newTab[i] = m_items[i];
             m_items = newTab;
@@ -98,8 +162,8 @@ public class BruteCollinearPoints {
     public BruteCollinearPoints(Point[] points) {        // finds all line segments containing 4 or more points
         cornerCases(points);
         final int Npoints = points.length;
-        segmentsTab = new vector<LineSegment>(INITIAL_LINE_SEGMENTS_CAPACITY);
-        vector<Quad> linesTotal = new vector<Quad>(INITIAL_LINE_SEGMENTS_CAPACITY);
+        segmentsTab = new vector_ls(INITIAL_LINE_SEGMENTS_CAPACITY);
+        vector_quad linesTotal = new vector_quad(INITIAL_LINE_SEGMENTS_CAPACITY);
 
         for (int i = 0; i < Npoints; ++i) {              // for any point i...
             double[] tmpSlopes = new double[Npoints];
@@ -139,7 +203,7 @@ public class BruteCollinearPoints {
             segmentsTab.push_back( linesTotal.at(it).toSegments(points) );
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
 
         // read the n points from a file
         In in = new In(args[0]);
@@ -172,7 +236,7 @@ public class BruteCollinearPoints {
     }
     
 
-    /*public static void main(String[] args) {
+    public static void main(String[] args) {
         Point point0 = new Point(1,1);
         Point point1 = new Point(2,2);
         Point point2 = new Point(3,3);
@@ -194,7 +258,7 @@ public class BruteCollinearPoints {
         System.out.println(segment[0].toString());
         System.out.println(segment[1].toString());
         System.out.println(segment[2].toString());
-    }  */
+    } */
 
     private void cornerCases(Point[] points) {
         if (points == null) throw new IllegalArgumentException("BruteCollinearPoints: input points table is null");

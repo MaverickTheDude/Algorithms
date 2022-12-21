@@ -5,13 +5,13 @@ public class FastCollinearPoints {
 
     private final int INITIAL_QUAD_CAPACITY = 6;
     private final int INITIAL_LINE_SEGMENTS_CAPACITY = 50;
-    private vector<LineSegment> segmentsTab;
+    private vector_ls segmentsTab;
 
     private class Quad {
-        private vector<Point> pointsALongLine;
+        private vector_point pointsALongLine;
 
         public Quad() {
-            pointsALongLine = new vector<Point>(INITIAL_QUAD_CAPACITY);
+            pointsALongLine = new vector_point(INITIAL_QUAD_CAPACITY);
         }
 
         public void push_back(Point point) {
@@ -44,33 +44,96 @@ public class FastCollinearPoints {
         }
     }
 
-    private class vector<Item> {
-        private Item[] m_items;
+    private class vector_quad {
+        private Quad[] m_items;
         private int m_elements = 0;
         private int m_capacity;
 
-        @SuppressWarnings("unchecked")
-        public vector(int capacity) {
+        public vector_quad(int capacity) {
             m_capacity = capacity;
-            this.m_items = (Item[]) new Object[m_capacity];
+            this.m_items = new Quad[m_capacity];
         }
 
-        public Item at(int index) {
+        public Quad at(int index) {
             if (index >= m_elements)
                 throw new IllegalArgumentException("vector: index out of range");
             return m_items[index];
         }
 
-        public void push_back(Item item) {
-            if (m_elements == m_capacity) {
+        public void push_back(Quad item) {
+            if (m_elements == m_capacity)
                 resize();
-            }
             m_items[m_elements++] = item;
         }
 
-        @SuppressWarnings("unchecked")
         public void resize() {
-            Item[] newTab = (Item[]) new Object[2*m_capacity];
+            Quad[] newTab = new Quad[2*m_capacity];
+            for (int i = 0; i < m_capacity; ++i)
+                newTab[i] = m_items[i];
+            m_items = newTab;
+            m_capacity *= 2;
+        }
+
+        public int size() { return m_elements; }
+    }
+
+    private class vector_ls {
+        private LineSegment[] m_items;
+        private int m_elements = 0;
+        private int m_capacity;
+
+        public vector_ls(int capacity) {
+            m_capacity = capacity;
+            this.m_items = new LineSegment[m_capacity];
+        }
+
+        public LineSegment at(int index) {
+            if (index >= m_elements)
+                throw new IllegalArgumentException("vector: index out of range");
+            return m_items[index];
+        }
+
+        public void push_back(LineSegment item) {
+            if (m_elements == m_capacity)
+                resize();
+            m_items[m_elements++] = item;
+        }
+
+        public void resize() {
+            LineSegment[] newTab = new LineSegment[2*m_capacity];
+            for (int i = 0; i < m_capacity; ++i)
+                newTab[i] = m_items[i];
+            m_items = newTab;
+            m_capacity *= 2;
+        }
+
+        public int size() { return m_elements; }
+    }
+
+    private class vector_point {
+        private Point[] m_items;
+        private int m_elements = 0;
+        private int m_capacity;
+
+        public vector_point(int capacity) {
+            m_capacity = capacity;
+            this.m_items = new Point[m_capacity];
+        }
+
+        public Point at(int index) {
+            if (index >= m_elements)
+                throw new IllegalArgumentException("vector: index out of range");
+            return m_items[index];
+        }
+
+        public void push_back(Point item) {
+            if (m_elements == m_capacity)
+                resize();
+            m_items[m_elements++] = item;
+        }
+
+        public void resize() {
+            Point[] newTab = new Point[2*m_capacity];
             for (int i = 0; i < m_capacity; ++i)
                 newTab[i] = m_items[i];
             m_items = newTab;
@@ -93,8 +156,8 @@ public class FastCollinearPoints {
     public FastCollinearPoints(Point[] points) {         // finds all line segments containing 4 or more points
         cornerCases(points);
         final int Npoints = points.length;
-        segmentsTab = new vector<LineSegment>(INITIAL_LINE_SEGMENTS_CAPACITY);
-        vector<Quad> linesTotal = new vector<Quad>(INITIAL_LINE_SEGMENTS_CAPACITY);
+        segmentsTab = new vector_ls(INITIAL_LINE_SEGMENTS_CAPACITY);
+        vector_quad linesTotal = new vector_quad(INITIAL_LINE_SEGMENTS_CAPACITY);
 
         for (int i = 0; i < Npoints; ++i) {              // for any point i...
 
@@ -107,6 +170,12 @@ public class FastCollinearPoints {
             for (int j = 0; j < Npoints-1; ++j)          // make *monotonic* table of slopes with point_i...
                 tmpSlopes[j] = point_i.slopeTo(currentPointsTab[j]);
 
+            // StdOut.printf("%s, %d, %d", point_i.toString(), Npoints, Nslopes-3);
+
+            // for (Point x : currentPointsTab)
+            //     StdOut.printf("%s, ", x);
+            // StdOut.printf("\n");
+
             searchForThreeIdenticalSlopes:
             for (int j = 0; j < Npoints-3; ++j) {
 
@@ -114,6 +183,10 @@ public class FastCollinearPoints {
                     if (linesTotal.at(it).partOfLine(point_i, currentPointsTab[j]))
                         break searchForThreeIdenticalSlopes;
                 }
+
+                // for (double x : tmpSlopes)
+                //     StdOut.printf("%f, ", x);
+                // StdOut.printf("\n");
                 
                 if (compare(tmpSlopes[j], tmpSlopes[j+1]) && 
                 compare(tmpSlopes[j], tmpSlopes[j+2])) {
@@ -123,6 +196,11 @@ public class FastCollinearPoints {
                     line.push_back(currentPointsTab[j]);
                     line.push_back(currentPointsTab[j+1]);
                     line.push_back(currentPointsTab[j+2]);
+
+            // for (int x = 0; x < line.elements(); ++x) {
+            //     StdOut.printf("%s", line.pointsALongLine.at(x).toString() );
+            // }
+            // StdOut.printf("\nk= %d, Nslopes= %d\n", j+3, Nslopes);
 
                     /* corner case: check if 5 or more points are along the line */
                     for (int k = j+3; k < Nslopes; ++k) {
@@ -140,7 +218,7 @@ public class FastCollinearPoints {
             segmentsTab.push_back( linesTotal.at(it).toSegments() );
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
 
         // read the n points from a file
         In in = new In(args[0]);
@@ -170,7 +248,7 @@ public class FastCollinearPoints {
         StdDraw.show();
     }
 
-    /*public static void main(String[] args) {
+    public static void main(String[] args) {
         Point point0 = new Point(1,1);
         Point point1 = new Point(2,2);
         Point point2 = new Point(3,3);
@@ -192,7 +270,7 @@ public class FastCollinearPoints {
         System.out.println(segment[0].toString());
         System.out.println(segment[1].toString());
         System.out.println(segment[2].toString());
-    }  */
+    } */
 
     private void cornerCases(Point[] points) {
         if (points == null) throw new IllegalArgumentException("FastCollinearPoints: input points table is null");
